@@ -14,10 +14,6 @@
 
 build.gradle
 ```gradle
-apply from: 'sdktools.gradle'
-// 看这里 https://github.com/undownding/autodetect_android_sdk_and_buildTools
-
-...
 // 合适的地方加这个，你懂的
  i.assets.srcDirs += "src/${i.name}/assets-hotload"
 ...
@@ -37,7 +33,7 @@ task finalize() {
         } else {
             exec {
                 workingDir "${projectDir}/build/tmp/kotlin-classes/"
-                commandLine "${project.androidSDKDir}/build-tools/${android.buildToolsVersion}/dx"             \
+                commandLine "${android.getSdkDirectory().toString()}/build-tools/${android.buildToolsVersion}/dx"             \
             , "--dex"             \
             , "--output=../oldschool.dex"             \
             , "release"
