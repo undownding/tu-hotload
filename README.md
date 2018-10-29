@@ -108,4 +108,4 @@ BaseApplication.java
         }
 ```
 
-完事
+``setApkClassLoader`` 是为了把 Application 的 classloader 替换为我们自己的，网上现在有好几种方案，不过我都不太满意。先观望，回头等有满意的再贴出来。
