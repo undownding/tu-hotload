@@ -67,11 +67,10 @@ BaseApplication.java
         // 处理动态加载
         if (!BuildConfig.DEBUG) {
             final File oldSchool = new File(getFilesDir().getAbsolutePath() + "/oldschool.dex");
-            final File newSchool = new File(getFilesDir().getAbsolutePath() + "/oldschool.dex");
+            final File newSchool = new File(getFilesDir().getAbsolutePath() + "/newschool.dex");
 
             // 如果 newschool.dex 存在, 则加载
-            // SplashActivity 里检查并下载 newschool.dex
-            if (newSchool.exists()) {
+            if (newSchool.exists() && newSchool.length() > 1024) {
                 final DexClassLoader classLoader = new DexClassLoader(
                         newSchool.getAbsolutePath(),
                         this.getDir("dexOpt", MODE_PRIVATE).getAbsolutePath(),
@@ -80,7 +79,10 @@ BaseApplication.java
                 );
                 setApkClassLoader(classLoader);
             } else { // 如果 newschool.dex 不存在，则加载 oldschool.dex
-                if (!oldSchool.exists()) { // 需要加载 oldschool.dex 但是不存在的话，先从 assets 里解压出来
+                final String schoolVersion = SharedPrefsUtils.getStringPreference("school_version");
+                if (!oldSchool.exists() || !schoolVersion.equals(BuildConfig.VERSION_NAME)) { // 需要加载 oldschool.dex 但是不存在的话，先从 assets 里解压出来
+                    SharedPrefsUtils.setStringPreference("school_version", BuildConfig.VERSION_NAME);
+
                     try (FileOutputStream steam = new FileOutputStream(oldSchool, false)) {
                         InputStream inputStream = getAssets().open("oldschool.dex");
 
@@ -92,14 +94,24 @@ BaseApplication.java
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    final DexClassLoader classLoader = new DexClassLoader(
-                            oldSchool.getAbsolutePath(),
-                            this.getDir("dexOpt", MODE_PRIVATE).getAbsolutePath(),
-                            null,
-                            getClassLoader()
-                    );
-                    setApkClassLoader(classLoader);
                 }
+                final DexClassLoader classLoader = new DexClassLoader(
+                        oldSchool.getAbsolutePath(),
+                        this.getDir("dexOpt", MODE_PRIVATE).getAbsolutePath(),
+                        null,
+                        getClassLoader()
+                );
+                setApkClassLoader(classLoader);
+            }
+
+            // 启动 Service 获取新版 newschool.dex
+            final Intent intent = new Intent();
+            intent.setClassName(this, "com.bitrabbit.pub.SchoolService");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            }
+            else {
+                startService(intent);
             }
         }
 ```
